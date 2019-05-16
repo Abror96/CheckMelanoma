@@ -72,7 +72,6 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
         presenter = new MainPresenterImpl(this, new MainInteractorImpl());
         dateAndTime = Calendar.getInstance();
         binding.pullToRefresh.setOnRefreshListener(this);
-        Log.d("LOGGERR", "onCreate: " + prefConfig.getToken());
 
         reInitRecyclerView();
         reloadData();
@@ -185,9 +184,9 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
                 if (!surname_str.isEmpty() && !name_str.isEmpty() && !patronymic_str.isEmpty()
                         && !patient_gender_str.isEmpty() && curDateLong != 0) {
                     presenter.onAddPatientClicked(prefConfig.getToken(), surname_str, name_str, patronymic_str, patient_gender_str, curDateLong);
+
+                    alertDialog.dismiss();
                 } else Snackbar.make(binding.mainView, "Заполните все поля", Snackbar.LENGTH_LONG).show();
-                alertDialog.dismiss();
-                reloadData();
             }
         });
     }
@@ -245,6 +244,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
     @Override
     public void onAddPatientSuccess() {
+        reloadData();
         Snackbar.make(binding.mainView, "Пациент успешно добавлен", Snackbar.LENGTH_LONG).show();
     }
 

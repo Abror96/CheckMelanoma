@@ -13,13 +13,20 @@ import com.era.checkmelanoma.adapters.ResearchesAdapter;
 import com.era.checkmelanoma.databinding.ActivityPatientCardBinding;
 import com.era.checkmelanoma.retrofit.models.responses.Research;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class PatientCardActivity extends AppCompatActivity {
 
     private ActivityPatientCardBinding binding;
     private String patient_name;
     private String patient_date;
+    private int patient_id;
+    private String patient_sex;
+    private Long date_of_birth = 0L;
     private ArrayList<Research> researchArrayList;
 
     @Override
@@ -34,10 +41,25 @@ public class PatientCardActivity extends AppCompatActivity {
         }
 
         if (getIntent().getStringExtra("name") != null) {
-            patient_name = getIntent().getStringExtra("name");
+
+            patient_id = getIntent().getIntExtra("id", -1);
+            patient_name = getIntent().getStringExtra("surname") + " " +
+                    getIntent().getStringExtra("name").substring(0,1).toUpperCase() + ". " +
+                    getIntent().getStringExtra("patronymic").substring(0,1).toUpperCase()+".";
             patient_date = getIntent().getStringExtra("date");
+            patient_sex = getIntent().getStringExtra("sex");
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                Date parsedDate = dateFormat.parse(patient_date);
+                Timestamp timestamp = new java.sql.Timestamp(parsedDate.getTime());
+                date_of_birth = timestamp.getTime();
+            } catch(Exception e) { //this generic but you can control another types of exception
+                // look the origin of excption
+            }
+
             binding.patientName.setText(patient_name);
-            binding.patientDate.setText(patient_date);
+            binding.patientDate.setText(getDifferenceBetweenDates(date_of_birth));
+            binding.patientGender.setText(patient_sex.equals("М") ? "Мужской" : "Женский");
         }
 
         researchArrayList = new ArrayList<>();
@@ -46,6 +68,19 @@ public class PatientCardActivity extends AppCompatActivity {
         ResearchesAdapter adapter = new ResearchesAdapter(researchArrayList, this);
         binding.researchesRecycler.setLayoutManager(new LinearLayoutManager(this));
         binding.researchesRecycler.setAdapter(adapter);
+    }
+
+    private String getDifferenceBetweenDates(Long bdate) {
+        Date firstDate = new Date(bdate);
+        Date curDate = new Date();
+        curDate.getTime();
+
+        long timeDiff = Math.abs(firstDate.getTime() - curDate.getTime());
+        String diff = String.valueOf(Math.round(TimeUnit.MILLISECONDS.toHours(timeDiff) / 8760));
+        int iTens = Integer.parseInt(diff) % 10;
+        String sYears = Integer.toString(Integer.parseInt(diff))
+                + " " + ((iTens == 1) ? "год" : ((iTens < 5 & iTens != 0) ? "года" : "лет"));
+        return sYears;
     }
 
     private void getResearchData() {
@@ -72,6 +107,7 @@ public class PatientCardActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.add_research:
                 Intent intent = new Intent(getApplicationContext(), AddResearchActivity.class);
+                intent.putExtra("id", patient_id);
                 startActivity(intent);
                 break;
             case R.id.more:

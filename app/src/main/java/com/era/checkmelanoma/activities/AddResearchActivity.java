@@ -1,8 +1,15 @@
 package com.era.checkmelanoma.activities;
 
 import android.app.ProgressDialog;
+
+import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
 import androidx.appcompat.app.AppCompatActivity;
+import okhttp3.MultipartBody;
+
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,17 +23,28 @@ import com.era.checkmelanoma.mvp.presenters.AddResearchPresenterImpl;
 import com.era.checkmelanoma.utils.BottomGenderFragment;
 import com.era.checkmelanoma.utils.IOnBtnPressed;
 import com.era.checkmelanoma.utils.PrefConfig;
+import com.era.checkmelanoma.utils.RequestPermissionHandler;
+import com.esafirm.imagepicker.features.ImagePicker;
+import com.esafirm.imagepicker.features.ReturnMode;
+import com.esafirm.imagepicker.model.Image;
+import com.google.android.material.snackbar.Snackbar;
 
+import static com.era.checkmelanoma.utils.CompressAndConvertBitmap.compressBitmap;
 import static com.era.checkmelanoma.utils.Constants.initProgressDialog;
 
 public class AddResearchActivity extends AppCompatActivity implements IOnBtnPressed, AddResearchContract.View {
 
+    private RequestPermissionHandler mRequestPermissionHandler;
     private ActivityAddResearchBinding binding;
     private BottomGenderFragment bottomGenderFragment;
     private String patient_gender = "";
     private ProgressDialog progressDialog;
     private PrefConfig prefConfig;
     private AddResearchContract.Presenter presenter;
+    private int patient_id;
+
+    private Bitmap photo;
+    private MultipartBody.Part multipart_photo = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,11 +55,23 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
         progressDialog = initProgressDialog(this, "Идёт загрузка");
         prefConfig = new PrefConfig(this);
         presenter = new AddResearchPresenterImpl(this, new AddResearchInteractorImpl());
+        mRequestPermissionHandler = new RequestPermissionHandler();
+
+        if (getIntent().getIntExtra("id", -1) != -1) {
+            patient_id = getIntent().getIntExtra("id", -1);
+        }
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_keyboard_arrow_left_black_24dp);
         }
+
+        binding.choosePhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                checkPermission();
+            }
+        });
 
         BottomGenderFragment.setBtnClickListener(this);
         binding.gender.setOnClickListener(new View.OnClickListener() {
@@ -51,6 +81,43 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
                 bottomGenderFragment.show(getSupportFragmentManager(), "gender");
             }
         });
+
+        binding.createResearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String researchPlace = binding.researchPlace.getText().toString().trim();
+                if (!researchPlace.isEmpty() && multipart_photo != null) {
+                    presenter.onAddResearchClicked(prefConfig.getToken(), multipart_photo, String.valueOf(patient_id), researchPlace);
+                } else Snackbar.make(binding.mainView, "Выберите фото и заполните область исследования", Snackbar.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void checkPermission() {
+        mRequestPermissionHandler.requestPermission(this, 777,
+                new RequestPermissionHandler.RequestPermissionListener() {
+                    @Override
+                    public void onSuccess() {
+                        ImagePicker.create(AddResearchActivity.this)
+                                .returnMode(ReturnMode.ALL)
+                                .folderMode(true)
+                                .single()
+                                .includeVideo(false)
+                                .start();
+                    }
+                    @Override
+                    public void onFailed() {
+                    }
+                }
+        );
+    }
+
+    // handling after permission result
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        mRequestPermissionHandler.onRequestPermissionsResult(requestCode, permissions,
+                grantResults);
     }
 
     @Override
@@ -90,11 +157,38 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
 
     @Override
     public void showSnackbar(String message) {
-
+        Snackbar.make(binding.mainView, message, Snackbar.LENGTH_LONG).show();
     }
 
     @Override
     public void onAddResearchSuccess() {
+        finish();
+    }
 
+    @Override
+    public void showProgress() {
+        progressDialog.show();
+    }
+
+    @Override
+    public void hideProgress() {
+        progressDialog.dismiss();
+    }
+
+    // handling selected image
+    @Override
+    public void onActivityResult(int requestCode, final int resultCode, Intent data) {
+        if (ImagePicker.shouldHandle(requestCode, resultCode, data)) {
+            Image image = ImagePicker.getFirstImageOrNull(data);
+            String filePath = image.getPath();
+            if (filePath != null) {
+                photo = BitmapFactory.decodeFile(filePath);
+                multipart_photo = compressBitmap(photo, "image", getApplicationContext());
+                binding.chosePhoto.setImageBitmap(photo);
+                binding.addPhotoTxt.setVisibility(View.GONE);
+            } else {
+                Snackbar.make(binding.mainView, "Не удалось загрузить фото", Snackbar.LENGTH_LONG).show();
+            }
+        }
     }
 }

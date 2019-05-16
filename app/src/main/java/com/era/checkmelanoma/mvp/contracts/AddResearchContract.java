@@ -11,6 +11,10 @@ public interface AddResearchContract {
 
         void onAddResearchSuccess();
 
+        void showProgress();
+
+        void hideProgress();
+
     }
 
     interface Presenter {

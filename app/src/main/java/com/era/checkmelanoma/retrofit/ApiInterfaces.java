@@ -10,6 +10,7 @@ import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Headers;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
@@ -54,7 +55,7 @@ public interface ApiInterfaces {
     @Multipart
     @POST("analysis/create")
     Call<CommonResponse> addResearch(@Header("Authorization") String token,
-                                     MultipartBody.Part file,
+                                     @Part MultipartBody.Part file,
                                      @Part("patients_id") RequestBody patients_id,
                                      @Part("subject_study") RequestBody subject_study);
 

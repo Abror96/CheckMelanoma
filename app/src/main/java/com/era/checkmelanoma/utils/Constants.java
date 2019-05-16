@@ -10,6 +10,10 @@ import java.text.SimpleDateFormat;
 public class Constants {
 
 
+    public static int QUALITY_PERCENT_MAX = 90;
+    public static int QUALITY_PERCENT_AVG = 60;
+    public static int QUALITY_PERCENT_MIN = 50;
+
     public static String getDate(long timeStamp){
 
         try{

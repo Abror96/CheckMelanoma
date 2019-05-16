@@ -5,6 +5,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.era.checkmelanoma.R;
+import com.era.checkmelanoma.activities.PatientCardActivity;
 import com.era.checkmelanoma.mvp.contracts.MainContract;
 import com.era.checkmelanoma.retrofit.models.responses.PatientsResponse;
 
@@ -80,7 +83,14 @@ public class PatientsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
+                    Intent intent = new Intent(context, PatientCardActivity.class);
+                    intent.putExtra("id", getItem(position).getId());
+                    intent.putExtra("surname", getItem(position).getFamily());
+                    intent.putExtra("name", getItem(position).getName());
+                    intent.putExtra("patronymic", getItem(position).getPatronymic());
+                    intent.putExtra("date", getItem(position).getDateBirth().substring(0, 10));
+                    intent.putExtra("sex", getItem(position).getSex());
+                    context.startActivity(intent);
                 }
             });
         } else if (holder instanceof LoadingViewHolder) {

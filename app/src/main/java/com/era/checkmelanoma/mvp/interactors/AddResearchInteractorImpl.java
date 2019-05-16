@@ -23,14 +23,14 @@ public class AddResearchInteractorImpl implements AddResearchContract.Interactor
     public void addResearchClicked(final OnFinishedListener onFinishedListener, String token,
                                    MultipartBody.Part file, RequestBody patient_id, RequestBody subject_study) {
 
-        Call<CommonResponse> sendEmailCall = apiService.addResearch(
+        Call<CommonResponse> addResearch = apiService.addResearch(
                 "Basic " + token,
                 file,
                 patient_id,
                 subject_study
         );
 
-        sendEmailCall.enqueue(new Callback<CommonResponse>() {
+        addResearch.enqueue(new Callback<CommonResponse>() {
             @Override
             public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
                 int statusCode = response.code();
