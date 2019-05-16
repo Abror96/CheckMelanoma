@@ -1,13 +1,11 @@
 package com.era.checkmelanoma.activities;
 
-import android.databinding.DataBindingUtil;
+import androidx.databinding.DataBindingUtil;
 import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.era.checkmelanoma.R;
 import com.era.checkmelanoma.databinding.ActivityResearchCardBinding;

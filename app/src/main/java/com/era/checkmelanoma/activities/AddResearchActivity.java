@@ -1,13 +1,12 @@
 package com.era.checkmelanoma.activities;
 
 import android.app.ProgressDialog;
-import android.databinding.DataBindingUtil;
-import android.support.v7.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.era.checkmelanoma.R;
 import com.era.checkmelanoma.databinding.ActivityAddResearchBinding;
