@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">CheckMelanoma</string>
+    <string name="main_title"><font color="#ffffff">Check</font><font color="#ACC174">Melanoma</font></string>
+</resources>
