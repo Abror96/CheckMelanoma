@@ -5,8 +5,9 @@ import android.util.Log;
 import com.era.checkmelanoma.mvp.contracts.AddResearchContract;
 import com.era.checkmelanoma.retrofit.ApiClient;
 import com.era.checkmelanoma.retrofit.ApiInterfaces;
-import com.era.checkmelanoma.retrofit.models.responses.CommonResponse;
+import com.era.checkmelanoma.retrofit.models.responses.AddResearchResponse;
 
+import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
@@ -23,30 +24,31 @@ public class AddResearchInteractorImpl implements AddResearchContract.Interactor
     public void addResearchClicked(final OnFinishedListener onFinishedListener, String token,
                                    MultipartBody.Part file, RequestBody patient_id, RequestBody subject_study) {
 
-        Call<CommonResponse> addResearch = apiService.addResearch(
+        Call<AddResearchResponse> addResearch = apiService.addResearch(
                 "Basic " + token,
                 file,
                 patient_id,
-                subject_study
+                subject_study,
+                RequestBody.create(MediaType.parse("text/plain"), "UTF")
         );
 
-        addResearch.enqueue(new Callback<CommonResponse>() {
+        addResearch.enqueue(new Callback<AddResearchResponse>() {
             @Override
-            public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
+            public void onResponse(Call<AddResearchResponse> call, Response<AddResearchResponse> response) {
                 int statusCode = response.code();
                 if (statusCode == 200) {
-                    CommonResponse commonResponse = response.body();
-                    if (commonResponse.getStatus().equals("OK")) {
-                        onFinishedListener.onFinished();
+                    AddResearchResponse addResearchResponse = response.body();
+                    if (addResearchResponse.getStatus().equals("OK")) {
+                        onFinishedListener.onFinished(addResearchResponse.getObject());
                         Log.d(TAG, "auth: " + response.body().getStatus());
-                    } else if (commonResponse.getStatus().toLowerCase().equals("error")) {
-                        onFinishedListener.onFailure(commonResponse.getError());
+                    } else if (addResearchResponse.getStatus().toLowerCase().equals("error")) {
+                        onFinishedListener.onFailure(addResearchResponse.getError());
                     }
                 } else onFinishedListener.onFailure("Произошла ошибка сервера "+ statusCode +". Попытайтесь снова");
             }
 
             @Override
-            public void onFailure(Call<CommonResponse> call, Throwable t) {
+            public void onFailure(Call<AddResearchResponse> call, Throwable t) {
                 Log.e(TAG, t.toString());
                 onFinishedListener.onFailure("Произошла ошибка сервера. Попытайтесь снова");
             }

@@ -1,8 +1,10 @@
 package com.era.checkmelanoma.retrofit;
 
 import com.era.checkmelanoma.retrofit.models.responses.AddPatientResponse;
+import com.era.checkmelanoma.retrofit.models.responses.AddResearchResponse;
 import com.era.checkmelanoma.retrofit.models.responses.CommonResponse;
 import com.era.checkmelanoma.retrofit.models.responses.PatientsResponse;
+import com.era.checkmelanoma.retrofit.models.responses.ResearchesResponse;
 
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -54,9 +56,17 @@ public interface ApiInterfaces {
     // add research
     @Multipart
     @POST("analysis/create")
-    Call<CommonResponse> addResearch(@Header("Authorization") String token,
-                                     @Part MultipartBody.Part file,
-                                     @Part("patients_id") RequestBody patients_id,
-                                     @Part("subject_study") RequestBody subject_study);
+    Call<AddResearchResponse> addResearch(@Header("Authorization") String token,
+                                          @Part MultipartBody.Part file,
+                                          @Part("patients_id") RequestBody patients_id,
+                                          @Part("subject_study") RequestBody subject_study,
+                                          @Part("charset") RequestBody charset);
+
+    // get researches list
+    @GET("analysis/getall")
+    Call<ResearchesResponse> getResearches(@Header("Authorization") String token,
+                                           @Query("patient_id") Long patient_id,
+                                           @Query("page") int page,
+                                           @Query("cntList") int cntList);
 
 }

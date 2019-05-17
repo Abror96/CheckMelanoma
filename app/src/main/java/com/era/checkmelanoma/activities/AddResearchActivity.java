@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +21,7 @@ import com.era.checkmelanoma.databinding.ActivityAddResearchBinding;
 import com.era.checkmelanoma.mvp.contracts.AddResearchContract;
 import com.era.checkmelanoma.mvp.interactors.AddResearchInteractorImpl;
 import com.era.checkmelanoma.mvp.presenters.AddResearchPresenterImpl;
+import com.era.checkmelanoma.retrofit.models.responses.AddResearchResponse;
 import com.era.checkmelanoma.utils.BottomGenderFragment;
 import com.era.checkmelanoma.utils.IOnBtnPressed;
 import com.era.checkmelanoma.utils.PrefConfig;
@@ -28,6 +30,10 @@ import com.esafirm.imagepicker.features.ImagePicker;
 import com.esafirm.imagepicker.features.ReturnMode;
 import com.esafirm.imagepicker.model.Image;
 import com.google.android.material.snackbar.Snackbar;
+
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.era.checkmelanoma.utils.CompressAndConvertBitmap.compressBitmap;
 import static com.era.checkmelanoma.utils.Constants.initProgressDialog;
@@ -45,6 +51,7 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
 
     private Bitmap photo;
     private MultipartBody.Part multipart_photo = null;
+    private Map<Integer, String> photos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +63,8 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
         prefConfig = new PrefConfig(this);
         presenter = new AddResearchPresenterImpl(this, new AddResearchInteractorImpl());
         mRequestPermissionHandler = new RequestPermissionHandler();
+
+        photos = prefConfig.getPhotos();
 
         if (getIntent().getIntExtra("id", -1) != -1) {
             patient_id = getIntent().getIntExtra("id", -1);
@@ -91,6 +100,13 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
                 } else Snackbar.make(binding.mainView, "Выберите фото и заполните область исследования", Snackbar.LENGTH_LONG).show();
             }
         });
+    }
+
+    private String getEncodedPhoto() {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        photo.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
     private void checkPermission() {
@@ -161,8 +177,19 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
     }
 
     @Override
-    public void onAddResearchSuccess() {
-        finish();
+    public void onAddResearchSuccess(AddResearchResponse.Object research) {
+        photos.put(research.getId(), getEncodedPhoto());
+        prefConfig.setPhotos(photos);
+        int benign = Integer.parseInt(String.valueOf(Math.round(research.getBenign()*100)));
+        int malignant = Integer.parseInt(String.valueOf(Math.round(research.getMalignant()*100)));
+        String diagnosis = benign > malignant ? "Доброкачественная" : "Злокачественная";
+
+        Intent intent = new Intent(this, ResearchCardActivity.class);
+        intent.putExtra("percent", benign > malignant ? benign : malignant);
+        intent.putExtra("diagnosis", diagnosis);
+        intent.putExtra("researchPlace", research.getSubjectStudy());
+        intent.putExtra("research_id", research.getId());
+        startActivityForResult(intent, 4983);
     }
 
     @Override
@@ -189,6 +216,9 @@ public class AddResearchActivity extends AppCompatActivity implements IOnBtnPres
             } else {
                 Snackbar.make(binding.mainView, "Не удалось загрузить фото", Snackbar.LENGTH_LONG).show();
             }
+        }
+        if (requestCode == 4983) {
+            finish();
         }
     }
 }

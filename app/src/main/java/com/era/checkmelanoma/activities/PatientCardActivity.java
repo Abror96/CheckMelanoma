@@ -1,17 +1,33 @@
 package com.era.checkmelanoma.activities;
 
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+
+import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import android.os.Handler;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.era.checkmelanoma.R;
+import com.era.checkmelanoma.adapters.PatientsAdapter;
 import com.era.checkmelanoma.adapters.ResearchesAdapter;
 import com.era.checkmelanoma.databinding.ActivityPatientCardBinding;
+import com.era.checkmelanoma.mvp.contracts.PatientCardContract;
+import com.era.checkmelanoma.mvp.interactors.PatientCardInteractorsImpl;
+import com.era.checkmelanoma.mvp.presenters.PatientCardPresenterImpl;
 import com.era.checkmelanoma.retrofit.models.responses.Research;
+import com.era.checkmelanoma.retrofit.models.responses.ResearchesResponse;
+import com.era.checkmelanoma.utils.PrefConfig;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -19,7 +35,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-public class PatientCardActivity extends AppCompatActivity {
+import static com.era.checkmelanoma.utils.Constants.initProgressDialog;
+
+public class PatientCardActivity extends AppCompatActivity implements PatientCardContract.View, SwipeRefreshLayout.OnRefreshListener {
 
     private ActivityPatientCardBinding binding;
     private String patient_name;
@@ -27,13 +45,24 @@ public class PatientCardActivity extends AppCompatActivity {
     private int patient_id;
     private String patient_sex;
     private Long date_of_birth = 0L;
-    private ArrayList<Research> researchArrayList;
+    private int page = 0;
+    private ArrayList<ResearchesResponse.Object> researchArrayList;
+    private CustomLinearLayoutManager customLinearLayoutManager;
+    private PrefConfig prefConfig;
+    private ResearchesAdapter researchesAdapter;
+    private PatientCardContract.Presenter presenter;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_patient_card);
         setSupportActionBar(binding.toolbar);
+
+        prefConfig = new PrefConfig(this);
+        presenter = new PatientCardPresenterImpl(this, new PatientCardInteractorsImpl());
+        progressDialog = initProgressDialog(this, "Идёт загрузка");
+        binding.pullToRefresh.setOnRefreshListener(this);
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -59,15 +88,57 @@ public class PatientCardActivity extends AppCompatActivity {
 
             binding.patientName.setText(patient_name);
             binding.patientDate.setText(getDifferenceBetweenDates(date_of_birth));
+            Log.d("LOGGERR", "onCreate: " + patient_sex);
             binding.patientGender.setText(patient_sex.equals("М") ? "Мужской" : "Женский");
         }
 
-        researchArrayList = new ArrayList<>();
-        getResearchData();
+        progressDialog.show();
+        reInitRecyclerView();
+        reloadData();
 
-        ResearchesAdapter adapter = new ResearchesAdapter(researchArrayList, this);
-        binding.researchesRecycler.setLayoutManager(new LinearLayoutManager(this));
-        binding.researchesRecycler.setAdapter(adapter);
+    }
+
+    private void reInitRecyclerView() {
+        customLinearLayoutManager = new CustomLinearLayoutManager(this) {
+            @Override
+            public boolean canScrollVertically() {
+                return super.canScrollVertically();
+            }
+        };
+
+        binding.researchesRecycler.setLayoutManager(customLinearLayoutManager);
+
+        researchArrayList = new ArrayList<>();
+        researchesAdapter = new ResearchesAdapter(researchArrayList, this, binding.researchesRecycler, this, patient_id);
+        binding.researchesRecycler.setAdapter(researchesAdapter);
+
+        researchesAdapter.setOnLoadMoreListener(new PatientsAdapter.OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+                researchArrayList.add(null);
+                researchesAdapter.notifyItemInserted(researchArrayList.size() - 1);
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            researchArrayList.remove(researchArrayList.size() - 1);
+                            researchesAdapter.notifyItemRemoved(researchArrayList.size());
+                        } catch (Exception ignored) {
+                        }
+                        page = page + 1;
+                        presenter.onGetResearchesListCalled(Long.parseLong(String.valueOf(patient_id)), page, 10, prefConfig.getToken());
+                    }
+                }, 500);
+            }
+        });
+    }
+
+    private void reloadData() {
+        page = 0;
+        if (researchArrayList.size() > 0) {
+            reInitRecyclerView();
+        }
+        presenter.onGetResearchesListCalled(Long.parseLong(String.valueOf(patient_id)), page, 10, prefConfig.getToken());
     }
 
     private String getDifferenceBetweenDates(Long bdate) {
@@ -83,19 +154,6 @@ public class PatientCardActivity extends AppCompatActivity {
         return sYears;
     }
 
-    private void getResearchData() {
-        researchArrayList.add(new Research(1, "Колено", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 27));
-        researchArrayList.add(new Research(2, "Спина", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 72));
-        researchArrayList.add(new Research(3, "Шея", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 43));
-        researchArrayList.add(new Research(4, "Локоть", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 83));
-        researchArrayList.add(new Research(5, "Стопа", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 99));
-        researchArrayList.add(new Research(6, "Бедро", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 34));
-        researchArrayList.add(new Research(7, "Грудь", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 73));
-        researchArrayList.add(new Research(8, "Живот", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 68));
-        researchArrayList.add(new Research(9, "Плечо", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 4));
-        researchArrayList.add(new Research(10, "Ладонь", 1557904926000L, "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Nevus.jpg/250px-Nevus.jpg", 89));
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.patient_menu, menu);
@@ -108,7 +166,7 @@ public class PatientCardActivity extends AppCompatActivity {
             case R.id.add_research:
                 Intent intent = new Intent(getApplicationContext(), AddResearchActivity.class);
                 intent.putExtra("id", patient_id);
-                startActivity(intent);
+                startActivityForResult(intent, 3975);
                 break;
             case R.id.more:
                 break;
@@ -117,5 +175,72 @@ public class PatientCardActivity extends AppCompatActivity {
                 break;
         }
         return true;
+    }
+
+    @Override
+    public void showSnackbar(String message) {
+        Snackbar.make(binding.mainView, message, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onGetResearchesListSuccess(ArrayList<ResearchesResponse.Object> researchesList) {
+        for (int i = 0; i < researchesList.size(); i++) {
+            researchArrayList.add(researchesList.get(i));
+            researchesAdapter.notifyDataSetChanged();
+            researchesAdapter.setLoaded();
+        }
+    }
+
+    @Override
+    public void showProgress() {
+        blockListView();
+    }
+
+    @Override
+    public void hideProgress() {
+        unblockListView();
+        progressDialog.dismiss();
+        binding.pullToRefresh.setRefreshing(false);
+    }
+
+    public void blockListView() {
+        binding.researchesRecycler.setClickable(false);
+        customLinearLayoutManager.setScrollEnabled(false);
+    }
+
+    public void unblockListView() {
+        binding.researchesRecycler.setClickable(true);
+        customLinearLayoutManager.setScrollEnabled(true);
+    }
+
+    @Override
+    public void onRefresh() {
+        reloadData();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 3975) {
+            reloadData();
+        }
+    }
+
+    public class CustomLinearLayoutManager extends LinearLayoutManager {
+        private boolean isScrollEnabled = true;
+
+        public CustomLinearLayoutManager(Context context) {
+            super(context);
+        }
+
+        public void setScrollEnabled(boolean flag) {
+            this.isScrollEnabled = flag;
+        }
+
+        @Override
+        public boolean canScrollVertically() {
+            //Similarly you can customize "canScrollHorizontally()" for managing horizontal scroll
+            return isScrollEnabled && super.canScrollVertically();
+        }
     }
 }

@@ -5,6 +5,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 
 import androidx.databinding.DataBindingUtil;
+
+import android.graphics.Bitmap;
 import android.os.Handler;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -33,11 +35,14 @@ import com.era.checkmelanoma.retrofit.models.responses.PatientsResponse;
 import com.era.checkmelanoma.utils.BottomGenderFragment;
 import com.era.checkmelanoma.utils.IOnBtnPressed;
 import com.era.checkmelanoma.utils.PrefConfig;
+import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.era.checkmelanoma.utils.Constants.initProgressDialog;
 
@@ -73,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
         dateAndTime = Calendar.getInstance();
         binding.pullToRefresh.setOnRefreshListener(this);
 
+        progressDialog.show();
         reInitRecyclerView();
         reloadData();
 
@@ -106,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
                         } catch (Exception ignored) {
                         }
                         page = page + 1;
-                        presenter.onGetPatientList(prefConfig.getToken(), "", "", "", page, 15);
+                        presenter.onGetPatientList(prefConfig.getToken(), "", "", "", page, 10);
                     }
                 }, 500);
             }
@@ -118,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
         if (patientArrayList.size() > 0) {
             reInitRecyclerView();
         }
-        presenter.onGetPatientList(prefConfig.getToken(), "", "", "", page, 15);
+        presenter.onGetPatientList(prefConfig.getToken(), "", "", "", page, 10);
     }
 
     @Override
@@ -256,6 +262,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
     @Override
     public void hideProgress() {
         unblockListView();
+        progressDialog.dismiss();
         binding.pullToRefresh.setRefreshing(false);
     }
 
@@ -283,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
     @Override
     public void onWomanClicked() {
-        patient_gender_str = "М";
+        patient_gender_str = "Ж";
         patient_gender.setText("Женский");
         bottomGenderFragment.dismiss();
     }

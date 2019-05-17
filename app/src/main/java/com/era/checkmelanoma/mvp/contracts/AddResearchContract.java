@@ -1,5 +1,7 @@
 package com.era.checkmelanoma.mvp.contracts;
 
+import com.era.checkmelanoma.retrofit.models.responses.AddResearchResponse;
+
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 
@@ -9,7 +11,7 @@ public interface AddResearchContract {
 
         void showSnackbar(String message);
 
-        void onAddResearchSuccess();
+        void onAddResearchSuccess(AddResearchResponse.Object research);
 
         void showProgress();
 
@@ -29,7 +31,7 @@ public interface AddResearchContract {
 
         interface OnFinishedListener {
 
-            void onFinished();
+            void onFinished(AddResearchResponse.Object research);
 
             void onFailure(String message);
 

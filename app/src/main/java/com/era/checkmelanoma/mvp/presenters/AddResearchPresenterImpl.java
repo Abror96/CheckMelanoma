@@ -3,6 +3,7 @@ package com.era.checkmelanoma.mvp.presenters;
 import android.util.Log;
 
 import com.era.checkmelanoma.mvp.contracts.AddResearchContract;
+import com.era.checkmelanoma.retrofit.models.responses.AddResearchResponse;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -26,17 +27,17 @@ public class AddResearchPresenterImpl implements AddResearchContract.Presenter, 
     @Override
     public void onAddResearchClicked(String token, MultipartBody.Part file, String patient_id, String subject_study) {
         Log.d("LOGGERR", "onAddResearchClicked: " + subject_study);
-        RequestBody patientIdRb = RequestBody.create(MediaType.parse("multipart/form-data"), patient_id);
-        RequestBody subjectStudyRb = RequestBody.create(MediaType.parse("multipart/form-data"), subject_study);
+        RequestBody patientIdRb = RequestBody.create(MediaType.parse("text/plain"), patient_id);
+        RequestBody subjectStudyRb = RequestBody.create(MediaType.parse("text/plain"), subject_study);
 
         interactor.addResearchClicked(this, token, file, patientIdRb, subjectStudyRb);
         if (view != null) view.showProgress();
     }
 
     @Override
-    public void onFinished() {
+    public void onFinished(AddResearchResponse.Object research) {
         if (view != null) {
-            view.onAddResearchSuccess();
+            view.onAddResearchSuccess(research);
             view.hideProgress();
         }
     }

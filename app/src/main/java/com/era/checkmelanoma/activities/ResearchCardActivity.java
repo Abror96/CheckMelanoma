@@ -1,17 +1,26 @@
 package com.era.checkmelanoma.activities;
 
 import androidx.databinding.DataBindingUtil;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.era.checkmelanoma.R;
 import com.era.checkmelanoma.databinding.ActivityResearchCardBinding;
+import com.era.checkmelanoma.utils.PrefConfig;
 import com.hookedonplay.decoviewlib.charts.DecoDrawEffect;
 import com.hookedonplay.decoviewlib.charts.SeriesItem;
 import com.hookedonplay.decoviewlib.events.DecoEvent;
+
+import java.util.Map;
 
 public class ResearchCardActivity extends AppCompatActivity {
 
@@ -19,12 +28,19 @@ public class ResearchCardActivity extends AppCompatActivity {
     private int research_precent = 0;
     private int mBackIndex;
     private int mSeries1Index;
+    private String diagnosis = "";
+    private String researchPlace = "";
+    private PrefConfig prefConfig;
+    private Map<Integer, String> photos;
+    private int research_id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_research_card);
         setSupportActionBar(binding.toolbar);
+
+        prefConfig = new PrefConfig(this);
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -33,9 +49,28 @@ public class ResearchCardActivity extends AppCompatActivity {
 
         if (getIntent().getIntExtra("percent", -1) != -1) {
             research_precent = getIntent().getIntExtra("percent", -1);
+            diagnosis = getIntent().getStringExtra("diagnosis");
+            researchPlace = getIntent().getStringExtra("researchPlace");
+            research_id = getIntent().getIntExtra("research_id", -1);
+
+            binding.researchResult.setText(diagnosis);
+            binding.researchPlace.setText("Объект исследования: "+researchPlace);
+
+            photos = prefConfig.getPhotos();
+            if (photos.size() != 0) {
+                if (photos.get(research_id) != null) {
+                    binding.researchImage.setVisibility(View.VISIBLE);
+                    binding.researchImage.setImageBitmap(getBitmap(photos.get(research_id)));
+                }
+            }
         }
 
         setChart();
+    }
+
+    private Bitmap getBitmap(String s) {
+        byte[] decodedString = Base64.decode(s, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
     }
 
     private void setChart() {
@@ -85,19 +120,20 @@ public class ResearchCardActivity extends AppCompatActivity {
 
         binding.chart.addEvent(new DecoEvent.Builder(100)
                 .setIndex(mBackIndex)
-                .setDuration(2000)
+                .setDuration(1500)
                 .setDelay(100)
                 .build());
 
         binding.chart.addEvent(new DecoEvent.Builder(DecoDrawEffect.EffectType.EFFECT_SPIRAL_OUT)
                 .setIndex(mSeries1Index)
-                .setDuration(2000)
-                .setDelay(850)
+                .setDuration(1500)
+                .setDelay(350)
                 .build());
 
         binding.chart.addEvent(new DecoEvent.Builder(research_precent)
                 .setIndex(mSeries1Index)
-                .setDelay(2850)
+                .setDuration(1500)
+                .setDelay(2350)
                 .build());
 
     }
