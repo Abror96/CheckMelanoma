@@ -83,7 +83,7 @@ public class ResearchesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             ResearchesViewHolder researchesViewHolder = (ResearchesViewHolder) holder;
 
             researchesViewHolder.name.setText(getItem(position).getSubjectStudy());
-            researchesViewHolder.date.setText(getItem(position).getDateAnalisys());
+            researchesViewHolder.date.setText("Дата исследования: " + getItem(position).getDateAnalisys().substring(0, 10));
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
