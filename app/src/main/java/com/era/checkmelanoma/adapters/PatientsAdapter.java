@@ -50,7 +50,7 @@ public class PatientsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
                 if ((!isLoading && totalItemCount <=
                         (lastVisibleItem + visibleThreshold) &
-                        totalItemCount > 14)) {
+                        totalItemCount > 9)) {
 
                     if (onLoadMoreListener != null) {
                         onLoadMoreListener.onLoadMore();

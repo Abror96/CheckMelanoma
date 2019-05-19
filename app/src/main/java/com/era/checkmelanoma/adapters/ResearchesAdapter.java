@@ -31,7 +31,7 @@ public class ResearchesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private PatientCardContract.View view;
     private static final int TYPE_ITEM = 0;
     private static final int TYPE_LOADING = 1;
-    private PatientsAdapter.OnLoadMoreListener onLoadMoreListener;
+    private OnLoadMoreListener onLoadMoreListener;
     private boolean isLoading;
     private int visibleThreshold = 5;
     private int lastVisibleItem, totalItemCount;
@@ -55,7 +55,7 @@ public class ResearchesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
                 if ((!isLoading && totalItemCount <=
                         (lastVisibleItem + visibleThreshold) &
-                        totalItemCount > 14)) {
+                        totalItemCount > 9)) {
 
                     if (onLoadMoreListener != null) {
                         onLoadMoreListener.onLoadMore();
@@ -122,7 +122,7 @@ public class ResearchesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         void onLoadMore();
     }
 
-    public void setOnLoadMoreListener(PatientsAdapter.OnLoadMoreListener mOnLoadMoreListener) {
+    public void setOnLoadMoreListener(OnLoadMoreListener mOnLoadMoreListener) {
         this.onLoadMoreListener = mOnLoadMoreListener;
     }
 

@@ -112,7 +112,7 @@ public class PatientCardActivity extends AppCompatActivity implements PatientCar
         researchesAdapter = new ResearchesAdapter(researchArrayList, this, binding.researchesRecycler, this, patient_id);
         binding.researchesRecycler.setAdapter(researchesAdapter);
 
-        researchesAdapter.setOnLoadMoreListener(new PatientsAdapter.OnLoadMoreListener() {
+        researchesAdapter.setOnLoadMoreListener(new ResearchesAdapter.OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
                 researchArrayList.add(null);
